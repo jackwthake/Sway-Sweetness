@@ -41,6 +41,19 @@ exec swayidle -w \
 ### dbus / systemd environment for Wayland app compatibility
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
 
+### Appearance — Tokyo Night
+# Solid background (placeholder until the custom wallpaper client exists).
+output * bg #1a1b26 solid_color
+# Gaps + thin borders, no title bars.
+default_border pixel 2
+gaps inner 8
+gaps outer 2
+# Window border colors:    border   background text     indicator child_border
+client.focused             #7aa2f7  #7aa2f7   #1a1b26  #bb9af7   #7aa2f7
+client.focused_inactive    #414868  #1a1b26   #c0caf5  #414868   #414868
+client.unfocused           #414868  #1a1b26   #565f89  #414868   #414868
+client.urgent              #f7768e  #f7768e   #1a1b26  #f7768e   #f7768e
+
 ### Key bindings — launchers / system
 bindsym $mod+Return exec $term
 bindsym $mod+space exec $menu
@@ -135,13 +148,13 @@ bar {
     status_command bash ~/.config/sway/statusbar.sh
     font pango:Fira Code 11
     colors {
-        background #1d1f21cc
-        statusline #c5c8c6ff
-        separator  #707880ff
+        background #1a1b26cc
+        statusline #c0caf5ff
+        separator  #414868ff
         #                  border    background text
-        focused_workspace  #4078c0ff #4078c0ff #ffffffff
-        active_workspace   #1d1f21cc #285577cc #ffffffff
-        inactive_workspace #1d1f21cc #1d1f21cc #888888ff
-        urgent_workspace   #cc6666ff #cc6666ff #ffffffff
+        focused_workspace  #7aa2f7ff #7aa2f7ff #1a1b26ff
+        active_workspace   #1a1b26cc #283457cc #c0caf5ff
+        inactive_workspace #1a1b26cc #1a1b26cc #565f89ff
+        urgent_workspace   #f7768eff #f7768eff #1a1b26ff
     }
 }

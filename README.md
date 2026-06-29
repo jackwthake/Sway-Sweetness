@@ -30,9 +30,11 @@ It's idempotent — safe to re-run.
 
 ```
 config/
-├── sway/config              # window manager: keybinds, outputs, workspaces, bar
+├── sway/config              # window manager: keybinds, outputs, workspaces, bar, theme
 ├── sway/statusbar.sh        # swaybar status line: volume | network | clock
 ├── foot/foot.ini            # terminal: fish shell + Fira Code font + transparency
+├── wofi/style.css           # launcher styling (Tokyo Night)
+├── wofi/config              # launcher behavior
 └── environment.d/10-shell.conf  # session-wide SHELL=fish
 ```
 
@@ -77,5 +79,23 @@ done
 - **Why `environment.d/10-shell.conf`?** The login shell is fish, but GDM
   exports `SHELL=/bin/bash` into the graphical session; this overrides it so
   apps that follow `$SHELL` (foot, editors) get fish.
+
+## Theme — Tokyo Night
+
+A single palette (`bg #1a1b26`, `fg #c0caf5`, blue `#7aa2f7`, purple `#bb9af7`,
+…) is applied across every layer:
+
+- **foot** — full 16-color ANSI set in `config/foot/foot.ini` `[colors]`.
+- **Sway** — window border colors, `gaps inner 8`, `default_border pixel 2`,
+  and a solid `#1a1b26` background (`output * bg`), all in `config/sway/config`.
+- **swaybar** — recolored `colors {}` block.
+- **wofi** — `config/wofi/style.css`.
+- **GTK apps** — dark Adwaita + Papirus-Dark icons, applied by `install.sh` via
+  `gsettings`. (No apt-packaged exact Tokyo Night GTK theme; this is the
+  reproducible dark approximation.)
+
+To retheme, swap the hex values in those files for another palette's. The flashy
+rices with rounded corners / blur / shadows are **SwayFX** (a Sway fork) or
+**Hyprland**, not vanilla Sway — this config is vanilla (flat colors + gaps).
 
 See `sway_setup.md` for the original design notes and rationale.

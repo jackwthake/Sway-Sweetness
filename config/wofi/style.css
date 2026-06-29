@@ -1,0 +1,42 @@
+/* wofi — Tokyo Night */
+window {
+    margin: 0px;
+    border: 2px solid #7aa2f7;
+    border-radius: 10px;
+    background-color: #1a1b26;
+    font-family: "Fira Code";
+    font-size: 14px;
+    color: #c0caf5;
+}
+
+#input {
+    margin: 8px;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    color: #c0caf5;
+    background-color: #24283b;
+}
+
+#input:focus {
+    border: 1px solid #7aa2f7;
+}
+
+#inner-box { margin: 8px; }
+#outer-box { margin: 0px; }
+#scroll    { margin: 0px; }
+
+#text { padding: 4px; color: #c0caf5; }
+
+#entry {
+    padding: 4px;
+    border-radius: 8px;
+}
+
+#entry:selected {
+    background-color: #7aa2f7;
+}
+
+#entry:selected #text {
+    color: #1a1b26;
+}

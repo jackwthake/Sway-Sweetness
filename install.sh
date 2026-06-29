@@ -14,13 +14,15 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_SRC="$REPO_DIR/config"
 CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-PACKAGES=(sway foot wofi swayidle pavucontrol fonts-firacode fish network-manager wireplumber)
+PACKAGES=(sway foot wofi swayidle pavucontrol fonts-firacode fish network-manager wireplumber papirus-icon-theme)
 
 # Files to install, relative to config/ (source) and ~/.config (destination).
 FILES=(
     sway/config
     sway/statusbar.sh
     foot/foot.ini
+    wofi/style.css
+    wofi/config
     environment.d/10-shell.conf
 )
 
@@ -54,6 +56,16 @@ if [ "$current_shell" != "$fish_path" ]; then
     sudo chsh -s "$fish_path" "$(id -un)"
 else
     info "Login shell already fish"
+fi
+
+# --- 4. GTK theme (dark + Papirus icons) ----------------------------------
+# No apt-packaged exact Tokyo Night GTK theme; use dark Adwaita + Papirus-Dark
+# so GTK apps (pavucontrol, file dialogs) match the dark palette.
+if command -v gsettings >/dev/null; then
+    info "Applying dark GTK theme + Papirus-Dark icons"
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' || true
+    gsettings set org.gnome.desktop.interface gtk-theme   'Adwaita-dark'  || true
+    gsettings set org.gnome.desktop.interface icon-theme  'Papirus-Dark'  || true
 fi
 
 cat <<EOF
