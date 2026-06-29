@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 # swaybar status line: volume | network | date/time
-# Plain-text status_command for swaybar — prints one line every few seconds.
+# Plain-text status_command for swaybar — prints one line, then sleeps.
 # Uses wpctl (wireplumber) and nmcli (network-manager); no extra deps.
+#
+# The sleep is interruptible: send SIGUSR1 to refresh immediately
+# (the volume keybinds do this so the bar updates the instant you turn the
+# knob, while still idling at the slow tick otherwise):
+#   pkill -USR1 -f statusbar.sh
 set -u
+
+sleep_pid=
+trap 'kill "$sleep_pid" 2>/dev/null' USR1
 
 volume() {
     local out
@@ -22,5 +30,6 @@ network() {
 
 while true; do
     printf '%s   |   %s   |   %s\n' "$(volume)" "$(network)" "$(date '+%a %d %b  %H:%M')"
-    sleep 5
+    sleep 5 & sleep_pid=$!
+    wait "$sleep_pid"
 done
