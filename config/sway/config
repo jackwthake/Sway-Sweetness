@@ -1,0 +1,122 @@
+# Sway config — minimal dual-monitor setup
+# Generated from sway_setup.md. A user config REPLACES /etc/sway/config,
+# so this file is fully self-contained.
+
+### Variables
+set $mod Mod4
+set $term foot
+set $menu wofi --show drun
+
+### Outputs
+# Two HP 25es 1080p panels. Names verified from DRM/sysfs; confirm with
+#   swaymsg -t get_outputs
+# Landscape (primary), sitting left and offset down by 618px:
+output HDMI-A-1 mode 1920x1080@60Hz position 0 618
+# Portrait, rotated. transform 90 verified correct on this hardware
+# (transform 270 came out upside-down).
+output DP-3 mode 1920x1080@60Hz transform 90 position 1920 0
+# Belt-and-suspenders alternative if connectors ever renumber (both panels
+# are identical HP 25es, distinguished only by serial):
+#   output "HWP HP 25es 3CM7010ZS1" transform 90 position 1920 0
+
+### Workspace pinning
+# 1-5 on the landscape monitor, 6-10 on the portrait monitor.
+workspace 1 output HDMI-A-1
+workspace 2 output HDMI-A-1
+workspace 3 output HDMI-A-1
+workspace 4 output HDMI-A-1
+workspace 5 output HDMI-A-1
+workspace 6 output DP-3
+workspace 7 output DP-3
+workspace 8 output DP-3
+workspace 9 output DP-3
+workspace 10 output DP-3
+
+### Idle / display power management (no lock screen — LUKS at boot is enough)
+# Blank both outputs via DPMS after 10 min; wake on input.
+exec swayidle -w \
+    timeout 600 'swaymsg "output * dpms off"' \
+    resume 'swaymsg "output * dpms on"'
+
+### dbus / systemd environment for Wayland app compatibility
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+
+### Key bindings — launchers / system
+bindsym $mod+Return exec $term
+bindsym $mod+space exec $menu
+bindsym $mod+Shift+s exec systemctl suspend
+bindsym $mod+Shift+q kill
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway?' -B 'Yes, exit' 'swaymsg exit'
+
+### Key bindings — focus (arrows + vim hjkl)
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
+### Key bindings — move focused window
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+
+### Key bindings — workspaces
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym $mod+6 workspace number 6
+bindsym $mod+7 workspace number 7
+bindsym $mod+8 workspace number 8
+bindsym $mod+9 workspace number 9
+bindsym $mod+0 workspace number 10
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+bindsym $mod+Shift+6 move container to workspace number 6
+bindsym $mod+Shift+7 move container to workspace number 7
+bindsym $mod+Shift+8 move container to workspace number 8
+bindsym $mod+Shift+9 move container to workspace number 9
+bindsym $mod+Shift+0 move container to workspace number 10
+
+### Key bindings — layout
+bindsym $mod+b splith
+bindsym $mod+v splitv
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+bindsym $mod+f fullscreen
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+a focus parent
+
+### Floating windows — drag with mod, resize with mod+right-button
+floating_modifier $mod normal
+
+### Resize mode
+mode "resize" {
+    bindsym Left resize shrink width 10px
+    bindsym Down resize grow height 10px
+    bindsym Up resize shrink height 10px
+    bindsym Right resize grow width 10px
+    bindsym h resize shrink width 10px
+    bindsym j resize grow height 10px
+    bindsym k resize shrink height 10px
+    bindsym l resize grow width 10px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+# No bar { } block -> no status bar.
