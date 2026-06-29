@@ -107,7 +107,7 @@ floating_modifier $mod normal
 ### Resize mode
 mode "resize" {
     bindsym Left resize shrink width 10px
-    bindsym Down resize shrinl height 10px
+    bindsym Down resize shrink height 10px
     bindsym Up resize grow height 10px
     bindsym Right resize grow width 10px
     bindsym h resize shrink width 10px
