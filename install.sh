@@ -14,7 +14,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_SRC="$REPO_DIR/config"
 CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-PACKAGES=(sway foot wofi swayidle pavucontrol fonts-firacode fish)
+PACKAGES=(sway foot wofi swayidle pavucontrol fonts-firacode fish network-manager)
 
 # Files to install, relative to config/ (source) and ~/.config (destination).
 FILES=(
@@ -47,10 +47,10 @@ done
 
 # --- 3. Login shell -------------------------------------------------------
 fish_path="$(command -v fish || echo /usr/bin/fish)"
-current_shell="$(getent passwd "$USER" | cut -d: -f7)"
+current_shell="$(getent passwd "$(id -un)" | cut -d: -f7)"
 if [ "$current_shell" != "$fish_path" ]; then
     info "Setting login shell to fish ($fish_path)"
-    sudo chsh -s "$fish_path" "$USER"
+    sudo chsh -s "$fish_path" "$(id -un)"
 else
     info "Login shell already fish"
 fi

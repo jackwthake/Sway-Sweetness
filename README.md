@@ -38,6 +38,26 @@ config/
 `config/` mirrors `~/.config/`, so adding a new dotfile is just: drop it under
 `config/`, add its path to the `FILES` array in `install.sh`.
 
+## Keeping the repo in sync
+
+This repo uses a **copy** model — `install.sh` copies `config/` → `~/.config/`.
+The two are not linked, so after you tweak a live config you must copy it back
+into the repo and commit, or the change is lost on the next fresh install:
+
+```bash
+# after editing e.g. ~/.config/sway/config and reloading Sway:
+cp ~/.config/sway/config config/sway/config
+git add -A && git commit -m "tweak: ..."
+```
+
+Check for drift anytime with:
+
+```bash
+for f in sway/config foot/foot.ini environment.d/10-shell.conf; do
+    diff -u config/$f ~/.config/$f
+done
+```
+
 ## Configuration notes
 
 - **Monitors are machine-specific.** `config/sway/config` hard-codes two HP 25es
