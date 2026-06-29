@@ -1,6 +1,5 @@
-# Sway config — minimal dual-monitor setup
-# Generated from sway_setup.md. A user config REPLACES /etc/sway/config,
-# so this file is fully self-contained.
+# Sway config — minimal dual-monitor setup.
+# A user config REPLACES /etc/sway/config, so this file is fully self-contained.
 
 ### Variables
 set $mod Mod4
