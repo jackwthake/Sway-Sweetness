@@ -151,5 +151,3 @@ A single palette (`bg #1a1b26`, `fg #c0caf5`, blue `#7aa2f7`, purple `#bb9af7`,
 To retheme, swap the hex values in those files for another palette's. The flashy
 rices with rounded corners / blur / shadows are **SwayFX** (a Sway fork) or
 **Hyprland**, not vanilla Sway — this config is vanilla (flat colors + gaps).
-
-See `sway_setup.md` for the original design notes and rationale.
