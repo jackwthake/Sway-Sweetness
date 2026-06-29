@@ -26,6 +26,61 @@ then the gear icon at bottom-right).
 
 It's idempotent — safe to re-run.
 
+## Keybindings
+
+`Super` is the modifier (the Windows key). Full source in `config/sway/config`.
+
+### Launchers & system
+
+| Key | Action |
+|-----|--------|
+| `Super+Return` | Open foot (terminal) |
+| `Super+Space` | Open wofi (app launcher) |
+| `Super+Shift+Q` | Close focused window |
+| `Super+Shift+C` | Reload Sway config |
+| `Super+Shift+E` | Exit Sway (with confirmation) |
+| `Super+Shift+S` | Suspend (`systemctl suspend`) |
+
+### Volume (rotary encoder / media keys)
+
+| Key | Action |
+|-----|--------|
+| `XF86AudioRaiseVolume` (knob up) | Volume +5% (capped 100%) |
+| `XF86AudioLowerVolume` (knob down) | Volume −5% |
+| `XF86AudioMute` (knob press) | Toggle mute |
+
+### Focus & movement
+
+| Key | Action |
+|-----|--------|
+| `Super+H/J/K/L` or `Super+←/↓/↑/→` | Move focus left/down/up/right |
+| `Super+Shift+H/J/K/L` or `Super+Shift+←/↓/↑/→` | Move window left/down/up/right |
+| `Super+A` | Focus parent container |
+
+### Workspaces
+
+| Key | Action |
+|-----|--------|
+| `Super+1`…`Super+0` | Switch to workspace 1–10 |
+| `Super+Shift+1`…`Super+Shift+0` | Move window to workspace 1–10 |
+
+Workspaces 1–5 live on the landscape monitor, 6–10 on the portrait monitor.
+
+### Layout
+
+| Key | Action |
+|-----|--------|
+| `Super+B` | Split horizontal |
+| `Super+V` | Split vertical |
+| `Super+S` | Stacking layout |
+| `Super+W` | Tabbed layout |
+| `Super+E` | Toggle split orientation |
+| `Super+F` | Fullscreen |
+| `Super+Shift+Space` | Toggle floating |
+| `Super+R` | Resize mode (then `H/J/K/L` or arrows; `Enter`/`Esc` to exit) |
+| `Super`+drag | Move floating window |
+| `Super`+right-drag | Resize window |
+
 ## Layout
 
 ```
@@ -67,9 +122,8 @@ done
   1080p panels: `HDMI-A-1` (landscape) and `DP-3` (portrait, `transform 90`).
   On different hardware, run `swaymsg -t get_outputs` from inside Sway and edit
   the `output` lines (names, `transform`, `position`).
-- **Modifier is Super** (the Windows key). Key binds: `Super+Return` = foot,
-  `Super+Space` = wofi, `Super+Shift+S` = suspend, `Super+Shift+E` = exit.
-  Full list in `config/sway/config`.
+- **Modifier is Super** (the Windows key). See [Keybindings](#keybindings) for
+  the full list.
 - **Top status bar** is swaybar (built into Sway), configured in the `bar {}`
   block of `config/sway/config`. Its status line comes from
   `config/sway/statusbar.sh` (volume via `wpctl`, network via `nmcli`, clock).
