@@ -119,4 +119,22 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 
-# No bar { } block -> no status bar.
+### Status bar (swaybar, top)
+# status_command run via bash so no exec bit is needed on the script.
+# Colors use #RRGGBBAA — the AA alpha gives a translucent bar to match the
+# foot transparency / future rendered wallpaper.
+bar {
+    position top
+    status_command bash ~/.config/sway/statusbar.sh
+    font pango:Fira Code 11
+    colors {
+        background #1d1f21cc
+        statusline #c5c8c6ff
+        separator  #707880ff
+        #                  border    background text
+        focused_workspace  #4078c0ff #4078c0ff #ffffffff
+        active_workspace   #1d1f21cc #285577cc #ffffffff
+        inactive_workspace #1d1f21cc #1d1f21cc #888888ff
+        urgent_workspace   #cc6666ff #cc6666ff #ffffffff
+    }
+}

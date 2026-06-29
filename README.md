@@ -30,8 +30,9 @@ It's idempotent — safe to re-run.
 
 ```
 config/
-├── sway/config              # window manager: keybinds, outputs, workspaces
-├── foot/foot.ini            # terminal: fish shell + Fira Code font
+├── sway/config              # window manager: keybinds, outputs, workspaces, bar
+├── sway/statusbar.sh        # swaybar status line: volume | network | clock
+├── foot/foot.ini            # terminal: fish shell + Fira Code font + transparency
 └── environment.d/10-shell.conf  # session-wide SHELL=fish
 ```
 
@@ -67,8 +68,12 @@ done
 - **Modifier is Super** (the Windows key). Key binds: `Super+Return` = foot,
   `Super+Space` = wofi, `Super+Shift+S` = suspend, `Super+Shift+E` = exit.
   Full list in `config/sway/config`.
-- **No lock screen / status bar / notification daemon** by design. Displays
-  blank via DPMS after 10 min idle (swayidle), relying on LUKS for security.
+- **Top status bar** is swaybar (built into Sway), configured in the `bar {}`
+  block of `config/sway/config`. Its status line comes from
+  `config/sway/statusbar.sh` (volume via `wpctl`, network via `nmcli`, clock).
+  The bar is translucent (`#RRGGBBAA` colors) to match the foot transparency.
+- **No lock screen / notification daemon** by design. Displays blank via DPMS
+  after 10 min idle (swayidle), relying on LUKS for security.
 - **Why `environment.d/10-shell.conf`?** The login shell is fish, but GDM
   exports `SHELL=/bin/bash` into the graphical session; this overrides it so
   apps that follow `$SHELL` (foot, editors) get fish.

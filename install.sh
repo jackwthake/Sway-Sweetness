@@ -14,11 +14,12 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_SRC="$REPO_DIR/config"
 CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-PACKAGES=(sway foot wofi swayidle pavucontrol fonts-firacode fish network-manager)
+PACKAGES=(sway foot wofi swayidle pavucontrol fonts-firacode fish network-manager wireplumber)
 
 # Files to install, relative to config/ (source) and ~/.config (destination).
 FILES=(
     sway/config
+    sway/statusbar.sh
     foot/foot.ini
     environment.d/10-shell.conf
 )
