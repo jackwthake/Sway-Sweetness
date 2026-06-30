@@ -106,6 +106,14 @@ if command -v gsettings >/dev/null; then
     gsettings set org.gnome.desktop.interface icon-theme  'Papirus-Dark'  || true
 fi
 
+# --- 5. Live background ---------------------------------------------------
+git submodule update --init
+cd bg
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+
 cat <<EOF
 
 Done.

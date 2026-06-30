@@ -1,0 +1,3 @@
+[submodule "bg/shader-works"]
+	path = bg/shader-works
+	url = https://github.com/jackwthake/shader-works.git
