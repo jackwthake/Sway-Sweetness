@@ -14,7 +14,18 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_SRC="$REPO_DIR/config"
 CONFIG_DST="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-PACKAGES=(sway foot wofi swayidle pavucontrol fonts-firacode fish network-manager wireplumber papirus-icon-theme)
+PACKAGES=(
+    # Compositor + core apps
+    sway foot wofi swayidle pavucontrol fonts-firacode fish
+    # Login manager (greetd) + its text greeter (tuigreet)
+    greetd tuigreet
+    # Networking + audio (wpctl/pavucontrol talk to PipeWire)
+    network-manager wireplumber pipewire-pulse
+    # Wayland portals — screenshots/screen-share (wlr) + file dialogs (gtk)
+    xdg-desktop-portal-wlr xdg-desktop-portal-gtk
+    # GTK dark theme plumbing for the gsettings step below
+    papirus-icon-theme gnome-themes-extra gsettings-desktop-schemas dconf-cli
+)
 
 # Files to install, relative to config/ (source) and ~/.config (destination).
 FILES=(
@@ -48,6 +59,30 @@ for rel in "${FILES[@]}"; do
     info "installed $dst"
 done
 
+# --- 2b. Login manager (greetd) -------------------------------------------
+# greetd config lives in /etc (not ~/.config), so it's handled separately.
+# We drop in the validated config.toml (tuigreet greeter launching Sway),
+# then make greetd the display manager.
+info "Installing greetd config -> /etc/greetd/config.toml"
+sudo install -d /etc/greetd
+if [ -e /etc/greetd/config.toml ] && \
+   ! cmp -s "$REPO_DIR/system/greetd/config.toml" /etc/greetd/config.toml; then
+    sudo cp -a /etc/greetd/config.toml "/etc/greetd/config.toml.bak-$(date +%Y%m%d-%H%M%S)"
+    info "backed up existing /etc/greetd/config.toml"
+fi
+sudo cp "$REPO_DIR/system/greetd/config.toml" /etc/greetd/config.toml
+
+# Disable any other display manager first so the display-manager.service alias
+# is free, then enable greetd. On a bare TTY install this loop is a no-op.
+for dm in gdm gdm3 lightdm sddm; do
+    if systemctl is-enabled "$dm" >/dev/null 2>&1; then
+        info "Disabling existing display manager: $dm"
+        sudo systemctl disable "$dm"
+    fi
+done
+info "Enabling greetd as the display manager"
+sudo systemctl enable greetd
+
 # --- 3. Login shell -------------------------------------------------------
 fish_path="$(command -v fish || echo /usr/bin/fish)"
 current_shell="$(getent passwd "$(id -un)" | cut -d: -f7)"
@@ -73,10 +108,13 @@ cat <<EOF
 Done.
 
 Next steps:
-  1. Log out of your current session.
-  2. At the GDM login screen, click your username, then the gear icon
-     (bottom-right) and select "Sway".
-  3. Log in.
+  1. Reboot (greetd replaces whatever display manager was running).
+  2. At the tuigreet greeter, your username is pre-filled; type your
+     password. Sway is the default session (toggle sessions with F3).
+  3. Log in -> Sway.
+
+If greetd ever fails to start, you land at a text TTY: log in and run
+'sway' directly, or reinstall a graphical login with 'sudo apt install gdm3'.
 
 Note: config/sway/config contains monitor output names, rotation and
 positions specific to this machine (two HP 25es panels on HDMI-A-1 and

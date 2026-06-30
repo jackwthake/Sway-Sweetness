@@ -1,8 +1,9 @@
 # sway-setup
 
-My personal Sway (Wayland) setup for Debian 12, kept alongside an existing
-GNOME/XFCE install. One script installs the packages, drops the config files
-into place, and sets fish as the login shell.
+My personal Sway (Wayland) setup for Debian. One script takes a bare,
+TTY-only Debian install all the way to this full desktop: it installs the
+packages, drops the config files into place, sets up greetd + tuigreet as the
+login manager, and sets fish as the login shell.
 
 ## Quick start
 
@@ -12,19 +13,25 @@ cd sway-setup
 ./install.sh
 ```
 
-Then log out and pick **Sway** from the GDM login screen (click your username,
-then the gear icon at bottom-right).
+Then **reboot**. The tuigreet greeter comes up with your username pre-filled;
+type your password and log in (Sway is the default session; `F3` toggles
+sessions).
 
 ## What it does
 
 `install.sh`:
 
-1. **Installs packages** — `sway foot wofi swayidle pavucontrol fonts-firacode fish`.
+1. **Installs packages** — the compositor (`sway foot wofi swayidle`), login
+   manager (`greetd tuigreet`), audio/network (`wireplumber pipewire-pulse
+   network-manager`), Wayland portals, fonts, and GTK-theme plumbing.
 2. **Copies config files** from `config/` into `~/.config/` (backing up anything
    it would overwrite to `~/.config-backup-<timestamp>/`).
-3. **Sets fish as the login shell** via `chsh` (if it isn't already).
+3. **Sets up greetd** — drops `system/greetd/config.toml` into `/etc/greetd/`,
+   disables any other display manager, and enables greetd.
+4. **Sets fish as the login shell** via `chsh` (if it isn't already).
 
-It's idempotent — safe to re-run.
+It's idempotent — safe to re-run. Steps that touch `/etc` and system services
+use `sudo`, so the account needs sudo rights.
 
 ## Keybindings
 
@@ -84,17 +91,21 @@ Workspaces 1–5 live on the landscape monitor, 6–10 on the portrait monitor.
 ## Layout
 
 ```
-config/
+config/                          # mirrors ~/.config/
 ├── sway/config              # window manager: keybinds, outputs, workspaces, bar, theme
 ├── sway/statusbar.sh        # swaybar status line: volume | network | clock
 ├── foot/foot.ini            # terminal: fish shell + Fira Code font + transparency
 ├── wofi/style.css           # launcher styling (Tokyo Night)
 ├── wofi/config              # launcher behavior
 └── environment.d/10-shell.conf  # session-wide SHELL=fish
+system/                          # system files (installed under /etc with sudo)
+└── greetd/config.toml       # login manager: tuigreet greeter launching Sway
 ```
 
 `config/` mirrors `~/.config/`, so adding a new dotfile is just: drop it under
-`config/`, add its path to the `FILES` array in `install.sh`.
+`config/`, add its path to the `FILES` array in `install.sh`. System files
+(under `/etc`) live in `system/` and are handled by their own steps in
+`install.sh`.
 
 ## Keeping the repo in sync
 
@@ -130,9 +141,14 @@ done
   The bar is translucent (`#RRGGBBAA` colors) to match the foot transparency.
 - **No lock screen / notification daemon** by design. Displays blank via DPMS
   after 10 min idle (swayidle), relying on LUKS for security.
-- **Why `environment.d/10-shell.conf`?** The login shell is fish, but GDM
-  exports `SHELL=/bin/bash` into the graphical session; this overrides it so
-  apps that follow `$SHELL` (foot, editors) get fish.
+- **Login manager is greetd + tuigreet**, configured in `system/greetd/config.toml`
+  (installed to `/etc/greetd/`). tuigreet is a lightweight text greeter on its
+  own VT — it lists Wayland sessions from `/usr/share/wayland-sessions` and
+  launches Sway. If greetd fails to start you drop to a text TTY where you can
+  run `sway` directly. No GNOME/GDM — this repo replaces them entirely.
+- **Why `environment.d/10-shell.conf`?** It pins `SHELL=fish` for the graphical
+  session, so apps that follow `$SHELL` (foot, editors) open fish regardless of
+  how the display manager seeds the environment.
 
 ## Theme — Tokyo Night
 

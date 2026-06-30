@@ -1,0 +1,10 @@
+[terminal]
+# VT 7, as shipped -- keeps the greeter off the text TTYs (1-6).
+vt = 7
+
+[default_session]
+# tuigreet: text greeter with clock, remembered user/session, masked password.
+# Session list comes from /usr/share/wayland-sessions (Sway is there).
+# --cmd sway is the fallback if no session is explicitly picked.
+command = "tuigreet --time --remember --remember-session --asterisks --cmd sway"
+user = "_greetd"
