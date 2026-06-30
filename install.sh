@@ -23,6 +23,8 @@ PACKAGES=(
     network-manager wireplumber pipewire-pulse
     # Wayland portals — screenshots/screen-share (wlr) + file dialogs (gtk)
     xdg-desktop-portal-wlr xdg-desktop-portal-gtk
+    # Screenshots: grim (capture) + slurp (region select) + clipboard
+    grim slurp wl-clipboard
     # GTK dark theme plumbing for the gsettings step below
     papirus-icon-theme gnome-themes-extra gsettings-desktop-schemas dconf-cli
 )
@@ -31,6 +33,7 @@ PACKAGES=(
 FILES=(
     sway/config
     sway/statusbar.sh
+    sway/screenshot.sh
     foot/foot.ini
     wofi/style.css
     wofi/config

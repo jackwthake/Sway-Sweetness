@@ -61,6 +61,16 @@ bindsym $mod+Shift+q kill
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway?' -B 'Yes, exit' 'swaymsg exit'
 
+### Screenshots (grim + slurp + wl-clipboard)
+# Saved to ~/Pictures/Screenshots and copied to the clipboard. Run via bash so
+# the script needs no exec bit. Super+P / Super+Shift+P are primary (work on
+# keyboards with no PrtSc key); the Print bindings are a bonus for those that
+# do have one.
+bindsym $mod+p       exec bash ~/.config/sway/screenshot.sh full
+bindsym $mod+Shift+p exec bash ~/.config/sway/screenshot.sh region
+bindsym Print        exec bash ~/.config/sway/screenshot.sh full
+bindsym Shift+Print  exec bash ~/.config/sway/screenshot.sh region
+
 ### Media keys — volume (rotary encoder: turn = volume, press = mute toggle)
 # --locked so they work even while the display is DPMS-off. -l 1.0 caps at 100%
 # (wpctl also clamps the low end at 0). The bar reflects changes on its 2.5s tick.

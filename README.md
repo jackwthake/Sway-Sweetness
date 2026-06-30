@@ -48,6 +48,17 @@ use `sudo`, so the account needs sudo rights.
 | `Super+Shift+E` | Exit Sway (with confirmation) |
 | `Super+Shift+S` | Suspend (`systemctl suspend`) |
 
+### Screenshots
+
+| Key | Action |
+|-----|--------|
+| `Super+P` | Capture whole screen → file + clipboard |
+| `Super+Shift+P` | Drag-select a region → file + clipboard |
+| `Print` / `Shift+Print` | Same two, if your keyboard has a `PrtSc` key |
+
+Saved to `~/Pictures/Screenshots/` and copied to the clipboard (grim + slurp +
+wl-clipboard, via `config/sway/screenshot.sh`).
+
 ### Volume (rotary encoder / media keys)
 
 | Key | Action |
@@ -94,6 +105,7 @@ Workspaces 1–5 live on the landscape monitor, 6–10 on the portrait monitor.
 config/                          # mirrors ~/.config/
 ├── sway/config              # window manager: keybinds, outputs, workspaces, bar, theme
 ├── sway/statusbar.sh        # swaybar status line: volume | network | clock
+├── sway/screenshot.sh       # grim/slurp screenshot helper (file + clipboard)
 ├── foot/foot.ini            # terminal: fish shell + Fira Code font + transparency
 ├── wofi/style.css           # launcher styling (Tokyo Night)
 ├── wofi/config              # launcher behavior
