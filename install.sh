@@ -107,12 +107,11 @@ if command -v gsettings >/dev/null; then
 fi
 
 # --- 5. Live background ---------------------------------------------------
-git submodule update --init
-cd bg
-mkdir build
-cd build
-cmake ..
-make -j$(nproc)
+git submodule update --init --recursive
+cmake -B "$REPO_DIR/bg/build" -S "$REPO_DIR/bg" -DCMAKE_BUILD_TYPE=Release
+cmake --build "$REPO_DIR/bg/build" -j"$(nproc)"
+install -Dm755 "$REPO_DIR/bg/build/bg" "$HOME/.local/bin/bg"
+info "installed bg -> $HOME/.local/bin/bg"
 
 cat <<EOF
 
