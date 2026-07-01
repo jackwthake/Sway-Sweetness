@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define RENDER_SCALE  6
+#define RENDER_SCALE  5
 #define MAX_DEPTH     10
 #define TARGET_FPS    24
 #define FRAME_MS      (1000.0f / TARGET_FPS)
