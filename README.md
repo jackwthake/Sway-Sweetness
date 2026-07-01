@@ -1,6 +1,6 @@
 # sway-setup
 
-![v1](./bg/screenshot/v1.png)
+![v2](./bg/screenshot/v2.png)
 
 My personal Sway (Wayland) setup for Debian. One script takes a bare,
 TTY-only Debian install all the way to this full desktop: it installs the
