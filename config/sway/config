@@ -40,8 +40,13 @@ exec swayidle -w \
 ### dbus / systemd environment for Wayland app compatibility
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
 
+### Live background
+# Restart on exit/crash (e.g. after suspend/resume tears down outputs) and log
+# stderr/stdout for postmortem debugging.
+exec sh -c 'mkdir -p "$HOME/.cache"; while true; do "$HOME/.local/bin/bg" >>"$HOME/.cache/bg.log" 2>&1; echo "--- bg exited rc=$? at $(date -Iseconds) ---" >>"$HOME/.cache/bg.log"; sleep 1; done'
+
 ### Appearance — Tokyo Night
-# Solid background (placeholder until the custom wallpaper client exists).
+# Solid colour fallback shown before the bg client attaches.
 output * bg #1a1b26 solid_color
 # Gaps + thin borders, no title bars.
 default_border pixel 2

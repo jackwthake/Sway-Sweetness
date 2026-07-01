@@ -51,6 +51,10 @@ static void out_render_destroy(struct out_render *r) {
 }
 
 int main(void) {
+  // Line-buffer stdout so startup/status messages hit the log file immediately
+  // instead of sitting in a full buffer that a crash would lose.
+  setvbuf(stdout, NULL, _IOLBF, 0);
+
   struct wayland_ctx *wl = wayland_ctx_create();
   if (!wl) return 1;
 
@@ -84,11 +88,20 @@ int main(void) {
     for (int i = 0; i < n; i++) {
       eglMakeCurrent(egl[i]->dpy, egl[i]->surf, egl[i]->surf, egl[i]->ctx);
       egl_ctx_upload_frame(egl[i], ren[i]->framebuffer, ren[i]->fb_w, ren[i]->fb_h);
-      egl_ctx_present(egl[i]);
+      if (!egl_ctx_present(egl[i])) {
+        fprintf(stderr, "bg: output %d lost its GL surface, exiting\n", i);
+        running = false;
+      }
     }
+    if (!running) break;
 
-    wl_display_dispatch_pending(wl->display);
-    wl_display_flush(wl->display);
+    if (wl_display_dispatch_pending(wl->display) < 0 ||
+        wl_display_flush(wl->display) < 0 ||
+        wl_display_get_error(wl->display) != 0) {
+      fprintf(stderr, "bg: wayland connection error (%d), exiting\n",
+              wl_display_get_error(wl->display));
+      break;
+    }
 
     float elapsed_ms = get_time_ms() - frame_start;
     float remaining_ms = FRAME_MS - elapsed_ms;

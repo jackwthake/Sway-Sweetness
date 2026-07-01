@@ -143,7 +143,7 @@ void egl_ctx_upload_frame(struct egl_ctx *egl, const uint32_t *pixels,
                0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 }
 
-void egl_ctx_present(struct egl_ctx *egl) {
+bool egl_ctx_present(struct egl_ctx *egl) {
   glClear(GL_COLOR_BUFFER_BIT);
   glUseProgram(egl->prog);
   glBindBuffer(GL_ARRAY_BUFFER, egl->vbo);
@@ -153,7 +153,11 @@ void egl_ctx_present(struct egl_ctx *egl) {
   glBindTexture(GL_TEXTURE_2D, egl->tex);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glDisableVertexAttribArray(egl->a_pos);
-  eglSwapBuffers(egl->dpy, egl->surf);
+  if (!eglSwapBuffers(egl->dpy, egl->surf)) {
+    fprintf(stderr, "bg: eglSwapBuffers failed (0x%x)\n", eglGetError());
+    return false;
+  }
+  return true;
 }
 
 void egl_ctx_destroy(struct egl_ctx *egl) {
