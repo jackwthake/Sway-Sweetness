@@ -12,7 +12,7 @@
 
 #define RENDER_SCALE  6
 #define MAX_DEPTH     10
-#define TARGET_FPS    25
+#define TARGET_FPS    24
 #define FRAME_MS      (1000.0f / TARGET_FPS)
 
 static float get_time_ms(void) {
@@ -29,6 +29,15 @@ static struct out_render *out_render_create(struct bg_output *out) {
   r->depthbuffer = malloc(r->fb_w * r->fb_h * sizeof(f32));
   init_renderer(&r->renderer, r->fb_w, r->fb_h, 0, 0,
                 r->framebuffer, r->depthbuffer, NULL, MAX_DEPTH);
+
+  // init_renderer bases projection_scale on fb_h, which over-zooms portrait
+  // displays. Normalize by the short edge so a rotated monitor of the same
+  // physical size renders at the same zoom as its landscape counterpart.
+  int short_edge = r->fb_w < r->fb_h ? r->fb_w : r->fb_h;
+  r->renderer.projection_scale    = (float)short_edge / BASE_SCREEN_HEIGHT_WORLD;
+  r->renderer.screen_height_world = (float)r->fb_h / r->renderer.projection_scale;
+  r->renderer.frustum_bound       = r->renderer.screen_height_world * 2.0f;
+
   printf("bg: output %dx%d -> framebuffer %dx%d\n",
          out->width, out->height, r->fb_w, r->fb_h);
   return r;

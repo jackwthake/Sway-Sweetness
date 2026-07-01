@@ -1,5 +1,7 @@
 # sway-setup
 
+![v1](./bg/screenshot/v1.png)
+
 My personal Sway (Wayland) setup for Debian. One script takes a bare,
 TTY-only Debian install all the way to this full desktop: it installs the
 packages, drops the config files into place, sets up greetd + tuigreet as the

@@ -61,6 +61,7 @@ file(GLOB_RECURSE SOURCES "src/*.c")
 
 add_executable(${PROJECT_NAME}
     ${SOURCES}
+    "${CMAKE_CURRENT_SOURCE_DIR}/shader-works/demos/common/noise.c"
     "${GEN_DIR}/xdg-shell-protocol.c"
     "${GEN_DIR}/wlr-layer-shell-unstable-v1-protocol.c"
 )
@@ -69,6 +70,7 @@ add_dependencies(${PROJECT_NAME} protocols)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     src
+    "${CMAKE_CURRENT_SOURCE_DIR}/shader-works/demos/common"
     "${GEN_DIR}"
     ${WAYLAND_INCLUDE_DIRS}
     ${EGL_INCLUDE_DIRS}
@@ -86,4 +88,5 @@ target_link_libraries(${PROJECT_NAME}
 target_compile_options(${PROJECT_NAME} PRIVATE
     -Wall -Wextra -Wpedantic -Wstrict-prototypes -Wshadow
     ${WAYLAND_CFLAGS_OTHER}
+    -O3 -march=native -ffast-math
 )

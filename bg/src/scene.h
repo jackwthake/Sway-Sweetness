@@ -12,9 +12,13 @@ struct out_render {
 };
 
 typedef struct {
-  model_t           cube;
+  model_t           ground_plane;
+  model_t           water_plane;
   light_t           sun;
-  fragment_shader_t frag;
+  fragment_shader_t ground_frag;
+  fragment_shader_t water_frag;
+  vertex_shader_t   water_vertex;
+  float             time;
 } scene_t;
 
 scene_t *scene_create(struct out_render **renderers, int num_outs);
