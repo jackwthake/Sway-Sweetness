@@ -171,9 +171,9 @@ static u32 ground_frag_fn(u32 input, fragment_context_t *ctx, void *args, usize 
 }
 
 
-#define WATER_WAVE_SCALE   0.35f
+#define WATER_WAVE_SCALE   0.5f
 #define WATER_HEIGHT_SCALE 0.35f
-#define WATER_TIME_SCALE   0.00012f
+#define WATER_TIME_SCALE   0.0002f
 #define WATER_NORMAL_EPS   0.05f
 
 // Raw ripple value (unscaled) shared by the color and height/normal calculations
@@ -276,7 +276,7 @@ scene_t *scene_create(struct out_render **renderers, int num_outs) {
 
   renderers[0]->camera.position = make_float3(0.0f, 2.0f, 0.0f);
   if (num_outs > 1) {
-    renderers[1]->camera.position = make_float3(0.0f, 2.0f, 0.0f);
+    renderers[1]->camera.position = make_float3(0.0f, 1.85f, 0.0f);
 
     // Seamlessly continue renderer[1]'s view to the right.
     // right edge of r1 + left half-FOV of r0 = yaw that places r0's left edge
@@ -289,7 +289,7 @@ scene_t *scene_create(struct out_render **renderers, int num_outs) {
 
     float yaw = renderers[0]->camera.yaw;
     renderers[0]->camera.position = make_float3(
-      r1_right_edge * sinf(yaw),
+      (r1_right_edge + 0.4) * sinf(yaw),
       4.15f,
       2.5f * cosf(yaw)
     );

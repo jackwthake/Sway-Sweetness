@@ -5,6 +5,7 @@
 #include "scene.h"
 
 #include <EGL/egl.h>
+#include <poll.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,6 +95,23 @@ int main(void) {
       }
     }
     if (!running) break;
+
+    // Actually read any pending data off the socket (dispatch_pending alone
+    // only processes events already queued from a previous read - it won't
+    // notice e.g. a fresh layer-surface configure sent after a DPMS cycle,
+    // which the compositor expects an ack for before it'll composite further
+    // commits. Without this, the client keeps swapping/committing "success-
+    // fully" while the compositor silently withholds the surface.
+    while (wl_display_prepare_read(wl->display) != 0) {
+      wl_display_dispatch_pending(wl->display);
+    }
+    wl_display_flush(wl->display);
+    struct pollfd pfd = { .fd = wl_display_get_fd(wl->display), .events = POLLIN };
+    if (poll(&pfd, 1, 0) > 0) {
+      wl_display_read_events(wl->display);
+    } else {
+      wl_display_cancel_read(wl->display);
+    }
 
     if (wl_display_dispatch_pending(wl->display) < 0 ||
         wl_display_flush(wl->display) < 0 ||

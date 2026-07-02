@@ -44,10 +44,13 @@ exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DE
 # Restart on exit/crash (e.g. after suspend/resume tears down outputs) and log
 # stderr/stdout for postmortem debugging.
 exec sh -c 'mkdir -p "$HOME/.cache"; while true; do "$HOME/.local/bin/bg" >>"$HOME/.cache/bg.log" 2>&1; echo "--- bg exited rc=$? at $(date -Iseconds) ---" >>"$HOME/.cache/bg.log"; sleep 1; done'
+# Sway spawns its own fallback `swaybg` for any output without an explicit
+# background, unconditionally, on every startup/reload - it can win the
+# startup race against bg and get stuck on top since nothing displaces it
+# afterwards. Sweep it away periodically so it never stays up for long.
+exec sh -c 'while true; do sleep 2; pkill -x swaybg 2>/dev/null; sleep 3; done'
 
 ### Appearance — Tokyo Night
-# Solid colour fallback shown before the bg client attaches.
-output * bg #1a1b26 solid_color
 # Gaps + thin borders, no title bars.
 default_border pixel 2
 gaps inner 8
