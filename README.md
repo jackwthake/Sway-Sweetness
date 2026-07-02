@@ -7,6 +7,8 @@ TTY-only Debian install all the way to this full desktop: it installs the
 packages, drops the config files into place, sets up greetd + tuigreet as the
 login manager, and sets fish as the login shell.
 
+**This is by no means clean code this is largely just an experiment with my personal dev machine!! DO NOT expect clean code like my other repos. This is for my exact setup not a general config - use at your own risk**
+
 ## Quick start
 
 ```bash
