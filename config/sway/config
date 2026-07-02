@@ -51,8 +51,8 @@ exec sh -c 'mkdir -p "$HOME/.cache"; while true; do "$HOME/.local/bin/bg" >>"$HO
 exec sh -c 'while true; do sleep 2; pkill -x swaybg 2>/dev/null; sleep 3; done'
 
 ### Appearance — Tokyo Night
-# Gaps + thin borders, no title bars.
-default_border pixel 2
+# Gaps + bordered title bars.
+default_border normal
 gaps inner 8
 gaps outer 2
 # Window border colors:    border   background text     indicator child_border
