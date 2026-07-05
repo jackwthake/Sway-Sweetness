@@ -1,3 +1,6 @@
 [submodule "bg/shader-works"]
 	path = bg/shader-works
 	url = https://github.com/jackwthake/shader-works.git
+[submodule "proj-pickr"]
+	path = proj-pickr
+	url = https://github.com/jackwthake/proj-pickr.git

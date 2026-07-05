@@ -38,6 +38,8 @@ FILES=(
     wofi/style.css
     wofi/config
     environment.d/10-shell.conf
+    fish/config.fish
+    fish/functions/pp.fish
 )
 
 info() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
@@ -112,6 +114,11 @@ cmake -B "$REPO_DIR/bg/build" -S "$REPO_DIR/bg" -DCMAKE_BUILD_TYPE=Release
 cmake --build "$REPO_DIR/bg/build" -j"$(nproc)"
 install -Dm755 "$REPO_DIR/bg/build/bg" "$HOME/.local/bin/bg"
 info "installed bg -> $HOME/.local/bin/bg"
+
+# --- 6. Project picker (proj-pickr) ----------------------------------------
+(cd "$REPO_DIR/proj-pickr" && ./build.sh)
+install -Dm755 "$REPO_DIR/proj-pickr/proj-pickr" "$HOME/.local/bin/proj-pickr"
+info "installed proj-pickr -> $HOME/.local/bin/proj-pickr"
 
 cat <<EOF
 

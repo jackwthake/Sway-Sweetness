@@ -113,9 +113,12 @@ config/                          # mirrors ~/.config/
 ├── foot/foot.ini            # terminal: fish shell + Fira Code font + transparency
 ├── wofi/style.css           # launcher styling (Tokyo Night)
 ├── wofi/config              # launcher behavior
-└── environment.d/10-shell.conf  # session-wide SHELL=fish
+├── environment.d/10-shell.conf  # session-wide SHELL=fish
+├── fish/config.fish         # fish startup: PATH, launches proj-pickr on new shells
+└── fish/functions/pp.fish   # fish function wrapping proj-pickr so it can `cd` the shell
 system/                          # system files (installed under /etc with sudo)
 └── greetd/config.toml       # login manager: tuigreet greeter launching Sway
+proj-pickr/                      # submodule: terminal project picker, built + installed to ~/.local/bin
 ```
 
 `config/` mirrors `~/.config/`, so adding a new dotfile is just: drop it under
@@ -138,7 +141,7 @@ git add -A && git commit -m "tweak: ..."
 Check for drift anytime with:
 
 ```bash
-for f in sway/config foot/foot.ini environment.d/10-shell.conf; do
+for f in sway/config foot/foot.ini environment.d/10-shell.conf fish/config.fish fish/functions/pp.fish; do
     diff -u config/$f ~/.config/$f
 done
 ```
