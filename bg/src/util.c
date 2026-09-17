@@ -1,7 +1,14 @@
+#define _DEFAULT_SOURCE
+
 #include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
+#include <string.h>
+#include <time.h>
+#include <limits.h>
+#include <dirent.h>
 
 #include "glyphs.inc"
 
@@ -115,4 +122,128 @@ void draw_string_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char
     
     str++;
   }
+}
+
+
+static bool ends_with(const char *str, const char *suffix) {
+  if (!str || !suffix) {
+    return false;
+  }
+  
+  size_t str_len = strlen(str);
+  size_t suffix_len = strlen(suffix);
+  
+  // If the suffix is longer than the string, it cannot be a match
+  if (suffix_len > str_len) {
+    return false;
+  }
+  
+  // Move the pointer of the main string to where the suffix should start
+  // and compare the remaining substring with the suffix
+  return strcmp(str + (str_len - suffix_len), suffix) == 0;
+}
+
+
+static void get_random_file_from_subdir_recurse(const char *base_dir, unsigned max_recurse_depth, unsigned current_depth, char *out_path, size_t out_path_size) {
+  static const char *const allowed_extensions[] = {".c", ".cpp", ".hs", ".rs", NULL};
+  static const char *const ignored_dirs[] = {".git", "node_modules", "include", "lib", "third-party", NULL};
+
+  static size_t total_file_count = 0;
+  static char **all_files = NULL;
+  static char **all_dirs = NULL;
+  
+  if (current_depth > max_recurse_depth) {
+    return;
+  }
+
+  DIR *dir = opendir(base_dir);
+  if (!dir) {
+    perror("opendir");
+    return;
+  }
+
+  struct dirent *entry;
+  size_t file_count = 0;
+  char **file_list = NULL;
+  size_t dir_count = 0;
+  char **dir_list = NULL;
+
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_type == DT_REG) { // Regular file
+      // Check if the file has an allowed extension
+      bool allowed = false;
+      for (int i = 0; allowed_extensions[i] != NULL; i++) {
+        if (ends_with(entry->d_name, allowed_extensions[i])) {
+          allowed = true;
+          break;
+        }
+      }
+      if (!allowed) continue;
+
+      file_list = realloc(file_list, sizeof(char *) * (file_count + 1));
+      file_list[file_count] = strdup(entry->d_name);
+      file_count++;
+    } else if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+      // Check if the directory is ignored
+      bool ignored = false;
+      for (int i = 0; ignored_dirs[i] != NULL; i++) {
+        if (strcmp(entry->d_name, ignored_dirs[i]) == 0) {
+          ignored = true;
+          break;
+        }
+      }
+      if (ignored) continue;
+
+      // Store subdirectory for processing
+      dir_list = realloc(dir_list, sizeof(char *) * (dir_count + 1));
+      dir_list[dir_count] = strdup(entry->d_name);
+      dir_count++;
+    }
+  }
+
+  closedir(dir);
+
+  if (file_count > 0) {
+    all_files = realloc(all_files, sizeof(char *) * (total_file_count + file_count));
+    for (size_t i = 0; i < file_count; i++) {
+      char full_path[512];
+      snprintf(full_path, sizeof(full_path), "%s/%s", base_dir, file_list[i]);
+      all_files[total_file_count + i] = strdup(full_path);
+    }
+    total_file_count += file_count;
+  }
+
+  for (size_t i = 0; i < dir_count; i++) {
+    char subdir_path[512];
+    snprintf(subdir_path, sizeof(subdir_path), "%s/%s", base_dir, dir_list[i]);
+    get_random_file_from_subdir_recurse(subdir_path, max_recurse_depth, current_depth + 1, out_path, out_path_size);
+  }
+
+  if (current_depth == 0 && total_file_count > 0) {
+    srand((unsigned int)time(NULL));
+    size_t random_index = rand() % total_file_count;
+    snprintf(out_path, out_path_size, "%s", all_files[random_index]);
+    
+    for (size_t i = 0; i < total_file_count; i++) {
+      free(all_files[i]);
+    }
+    free(all_files);
+    all_files = NULL;
+    total_file_count = 0;
+  }
+
+  for (size_t i = 0; i < file_count; i++) {
+    free(file_list[i]);
+  }
+  free(file_list);
+  
+  for (size_t i = 0; i < dir_count; i++) {
+    free(dir_list[i]);
+  }
+  free(dir_list);
+}
+
+
+void get_random_file_from_subdir(const char *base_dir, unsigned max_recurse_depth, char *out_path, size_t out_path_size) {
+  get_random_file_from_subdir_recurse(base_dir, max_recurse_depth, 0, out_path, out_path_size);
 }

@@ -1,13 +1,43 @@
 #include "scene.h"
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <math.h>
 
 #include "util.h"
 
+static char *current_file_buffer = NULL;
+static size_t current_file_buffer_size = 0;
+
+void load_next_file() {
+  static char filebuffer[512];
+  get_random_file_from_subdir("/home/jwt/Code", 5, filebuffer, sizeof(filebuffer));
+  FILE *file = fopen(filebuffer, "r");
+  if (!file) {
+    fprintf(stderr, "Error: Could not open file %s\n", filebuffer);
+    return;
+  }
+
+  fseek(file, 0, SEEK_END);
+  current_file_buffer_size = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  if (current_file_buffer) {
+    free(current_file_buffer);
+  }
+
+  current_file_buffer = malloc(current_file_buffer_size + 1);
+  fread(current_file_buffer, 1, current_file_buffer_size, file);
+  current_file_buffer[current_file_buffer_size] = '\0';
+  fclose(file);
+}
+
 
 scene_t *scene_create(struct out_render **renderers, int num_outs) {
+  srand((unsigned int)time(NULL));
+
   scene_t *s = calloc(1, sizeof(*s));
 
   s->lain = convert_bmp_to_framebuffer("assets/lain.bmp", &s->lain_w, &s->lain_h);
@@ -24,6 +54,8 @@ scene_t *scene_create(struct out_render **renderers, int num_outs) {
     }
   }
 
+  load_next_file();
+
   return s;
 }
 
@@ -38,10 +70,14 @@ void scene_destroy(scene_t *scene) {
 void render_horizontal(scene_t *s) {
   if (!s->renderer_horizontal) return;
   int lain_x = s->renderer_horizontal->fb_w - (s->lain_w * 0.80f);
+  
+  if (current_file_buffer) {
+    draw_string_to_framebuffer(s->renderer_horizontal->framebuffer, s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, current_file_buffer, 10, 10, 0xFFFAFAFA);
+  } else {
+    draw_string_to_framebuffer(s->renderer_horizontal->framebuffer, s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, "No file loaded", 10, 10, 0xFFFAFAFA);
+  }
 
   draw_bitmap_to_framebuffer(s->renderer_horizontal->framebuffer, s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, s->lain, s->lain_w, s->lain_h, lain_x, 0);
-
-  draw_string_to_framebuffer(s->renderer_horizontal->framebuffer, s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, "The quick brown fox jumps over the lazy dog\n1234567890\n\t{},.?/\\!-_=+*&~^\n[]#$%'\";:", 8, 32, 0xFFFAFAFA);
 }
 
 
@@ -49,7 +85,13 @@ void render_vertical(scene_t *s) {
   if (!s->renderer_vertical) return;
   int lain_y = s->renderer_vertical->fb_h - (s->lain_h * 0.60f);
   int lain_x = s->renderer_vertical->fb_w - (s->lain_w * 0.80f);
-
+  
+  if (current_file_buffer) {
+    draw_string_to_framebuffer(s->renderer_vertical->framebuffer, s->renderer_vertical->fb_w, s->renderer_vertical->fb_h, current_file_buffer, 10, 10, 0xFFFAFAFA);
+  } else {
+    draw_string_to_framebuffer(s->renderer_vertical->framebuffer, s->renderer_vertical->fb_w, s->renderer_vertical->fb_h, "No file loaded", 10, 10, 0xFFFAFAFA);
+  }
+  
   draw_bitmap_to_framebuffer(s->renderer_vertical->framebuffer, s->renderer_vertical->fb_w, s->renderer_vertical->fb_h, s->lain, s->lain_w, s->lain_h, lain_x, lain_y);
 }
 
@@ -105,7 +147,7 @@ void crt_bloom_screen_shader(u32 *framebuffer, int fb_w, int fb_h, float time) {
 void vignette_screen_shader(u32 *framebuffer, int fb_w, int fb_h) {
   float center_x = fb_w / 2.0f;
   float center_y = fb_h / 2.0f;
-  float max_distance = sqrt(center_x * center_x + center_y * center_y) * 2.0f;
+  float max_distance = sqrt(center_x * center_x + center_y * center_y) * 1.5f;
 
   for (int y = 0; y < fb_h; y++) {
     for (int x = 0; x < fb_w; x++) {
