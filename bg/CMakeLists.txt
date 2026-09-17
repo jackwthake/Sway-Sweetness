@@ -11,6 +11,13 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# --- Build SDL first ---
+set(SDL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/third-party/SDL")
+if(NOT EXISTS "${SDL_DIR}/CMakeLists.txt")
+    message(FATAL_ERROR "SDL source not found at ${SDL_DIR}. Check the vendored dependency path.")
+endif()
+add_subdirectory("${SDL_DIR}")
+
 # --- Dependencies ---
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND REQUIRED wayland-client wayland-egl)
@@ -18,20 +25,14 @@ pkg_check_modules(EGL     REQUIRED egl)
 pkg_check_modules(GLES    REQUIRED glesv2)
 find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
 
-# --- shader-works (CPU software renderer, core lib only — no SDL, no demos) ---
-set(SHADER_WORKS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(SHADER_WORKS_BUILD_DEMOS    OFF CACHE BOOL "" FORCE)
-set(SHADER_WORKS_USE_THREADS    ON  CACHE BOOL "" FORCE)
-add_subdirectory(shader-works)
-
 # --- Wayland protocol glue generation ---
 set(PROTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/protocols")
 set(GEN_DIR   "${CMAKE_CURRENT_BINARY_DIR}/generated")
 file(MAKE_DIRECTORY "${GEN_DIR}")
 
-# xdg-shell is stable Wayland; use the copy bundled with shader-works/SDL
+# xdg-shell is stable Wayland; use the vendored SDL copy
 set(XDG_SHELL_XML
-    "${CMAKE_CURRENT_SOURCE_DIR}/shader-works/third-party/SDL/wayland-protocols/xdg-shell.xml")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/third-party/SDL/wayland-protocols/xdg-shell.xml")
 
 function(gen_protocol name xml)
     add_custom_command(
@@ -57,11 +58,10 @@ add_custom_target(protocols ALL DEPENDS
 )
 
 # --- Main executable ---
-file(GLOB_RECURSE SOURCES "src/*.c")
+file(GLOB SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
 
 add_executable(${PROJECT_NAME}
     ${SOURCES}
-    "${CMAKE_CURRENT_SOURCE_DIR}/shader-works/demos/common/noise.c"
     "${GEN_DIR}/xdg-shell-protocol.c"
     "${GEN_DIR}/wlr-layer-shell-unstable-v1-protocol.c"
 )
@@ -70,7 +70,6 @@ add_dependencies(${PROJECT_NAME} protocols)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     src
-    "${CMAKE_CURRENT_SOURCE_DIR}/shader-works/demos/common"
     "${GEN_DIR}"
     ${WAYLAND_INCLUDE_DIRS}
     ${EGL_INCLUDE_DIRS}
@@ -78,7 +77,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME}
-    shader-works
+    PRIVATE
+    SDL3::SDL3
     ${WAYLAND_LIBRARIES}
     ${EGL_LIBRARIES}
     ${GLES_LIBRARIES}
@@ -90,3 +90,17 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     ${WAYLAND_CFLAGS_OTHER}
     -O3 -march=native -ffast-math
 )
+
+# --- Copy assets to build directory ---
+file(GLOB_RECURSE ASSET_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
+
+add_custom_target(copy_assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "${CMAKE_CURRENT_BINARY_DIR}/assets"
+    COMMENT "Copying assets to build directory"
+    SOURCES ${ASSET_FILES}
+)
+
+add_dependencies(${PROJECT_NAME} copy_assets)

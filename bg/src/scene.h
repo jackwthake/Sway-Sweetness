@@ -1,24 +1,38 @@
 #pragma once
 
 #include <stdbool.h>
-#include <shader-works/renderer.h>
+#include <stdint.h>
+#include <stddef.h>
+
+#define BG 0xFF180602
+#define TRANSPARENT_COLOR 0xFFFF00FF
+
+// Type definitions
+typedef int8_t   i8;
+typedef uint8_t  u8;
+typedef int16_t  i16;
+typedef uint16_t u16;
+typedef int32_t  i32;
+typedef uint32_t u32;
+typedef int64_t  i64;
+typedef uint64_t u64;
+typedef size_t   usize;
+
+typedef float    f32;
+typedef double   f64;
 
 struct out_render {
   u32        *framebuffer;
-  f32        *depthbuffer;
   int         fb_w, fb_h;
-  renderer_t  renderer;
-  transform_t camera;
 };
 
 typedef struct {
-  model_t           ground_plane;
-  model_t           water_plane;
-  light_t           sun;
-  fragment_shader_t ground_frag;
-  fragment_shader_t water_frag;
-  vertex_shader_t   water_vertex;
   float             time;
+  u32              *lain;
+  int               lain_w, lain_h;
+
+  struct out_render       *renderer_horizontal;
+  struct out_render       *renderer_vertical;
 } scene_t;
 
 scene_t *scene_create(struct out_render **renderers, int num_outs);
