@@ -175,3 +175,6 @@ bar {
         urgent_workspace   #f7768eff #f7768eff #1a1b26ff
     }
 }
+
+exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK
+exec hash dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY SWAYSOCK
