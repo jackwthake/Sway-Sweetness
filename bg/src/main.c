@@ -12,7 +12,7 @@
 #include <time.h>
 
 #define RENDER_SCALE  2
-#define TARGET_FPS    24
+#define TARGET_FPS    15
 #define FRAME_MS      (1000.0f / TARGET_FPS)
 
 static float get_time_ms(void) {
@@ -75,8 +75,16 @@ int main(void) {
 
     for (int i = 0; i < n; i++) {
       eglMakeCurrent(egl[i]->dpy, egl[i]->surf, egl[i]->surf, egl[i]->ctx);
+
+      float aberation = 0.0015f; // Adjust this value to control the chromatic aberration effect
+
+      // random chance for aberation to flare
+      if ((rand() % 100) < 2) {
+        aberation = 0.005f; // Increase the aberration for a brief flare
+      }
+
       egl_ctx_upload_frame(egl[i], ren[i]->framebuffer, ren[i]->fb_w, ren[i]->fb_h);
-      if (!egl_ctx_present(egl[i])) {
+      if (!egl_ctx_present(egl[i], aberation, frame_start, ren[i]->fb_w, ren[i]->fb_h)) {
         fprintf(stderr, "bg: output %d lost its GL surface, exiting\n", i);
         running = false;
       }

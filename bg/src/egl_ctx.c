@@ -16,12 +16,49 @@ static const char *vert_src =
   "}\n";
 
 static const char *frag_src =
-  "precision mediump float;\n"
-  "uniform sampler2D u_tex;\n"
-  "varying vec2 v_uv;\n"
-  "void main() {\n"
-  "  gl_FragColor = texture2D(u_tex, v_uv);\n"
-  "}\n";
+"precision mediump float;\n"
+"\n"
+"uniform sampler2D u_texture;\n"
+"uniform vec2 u_resolution;\n"
+"uniform float u_time;\n"
+"uniform float color_shift;\n"
+"varying vec2 v_uv;\n"
+"\n"
+"void main() {\n"
+"    // 1. Screen curvature (barrel distortion)\n"
+"    vec2 tc = v_uv - 0.5;\n"
+"    float dist = dot(tc, tc);\n"
+"    tc *= 1.0 + dist * 0.1;\n"
+"    tc += 0.5;\n"
+"\n"
+"    // 2. Out-of-bounds check (black border)\n"
+"    if (tc.x < 0.0 || tc.x > 1.0 || tc.y < 0.0 || tc.y > 1.0) {\n"
+"        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n"
+"    } else {\n"
+"        // 3. Chromatic Aberration\n"
+"        float r = texture2D(u_texture, vec2(tc.x - color_shift, tc.y)).r;\n"
+"        float g = texture2D(u_texture, tc).g;\n"
+"        float b = texture2D(u_texture, vec2(tc.x + color_shift, tc.y)).b;\n"
+"        vec4 cta = vec4(r, g, b, 1.0);\n"
+"\n"
+"        // 4. Base horizontal scanlines\n"
+"        float scanline = sin(tc.y * u_resolution.y * 3.14159) * 0.12;\n"
+"        cta.rgb -= scanline;\n"
+"\n"
+"        // 5. Discrete Rolling Interference Bars\n"
+"        // Move coordinates over time and scale the frequency (how many bars)\n"
+"        float bar_coord = fract((tc.y - u_time * 0.00005) * 0.75);\n"
+"\n"
+"        // Create a discrete bar: if the coordinate is less than 0.1, darken it\n"
+"        float bar_mask = step(bar_coord, 0.1); \n"
+"        \n"
+"        // Apply the sharp bar effect (darkens the pixels inside the bar mask)\n"
+"        cta.rgb -= bar_mask * 0.05; \n"
+"\n"
+"        gl_FragColor = cta;\n"
+"    }\n"
+"}\n";
+
 
 static const float quad[] = {
   -1.0f, -1.0f,
@@ -39,7 +76,7 @@ static GLuint compile_shader(GLenum type, const char *src) {
   if (!ok) {
     char buf[512];
     glGetShaderInfoLog(s, sizeof(buf), NULL, buf);
-    fprintf(stderr, "bg: shader error: %s\n", buf);
+    printf("bg: shader error: %s\n");
     glDeleteShader(s);
     return 0;
   }
@@ -119,7 +156,10 @@ struct egl_ctx *egl_ctx_create(struct wl_display *wayland_dpy,
 
   glUseProgram(egl->prog);
   egl->a_pos = glGetAttribLocation(egl->prog, "a_pos");
-  glUniform1i(glGetUniformLocation(egl->prog, "u_tex"), 0);
+  egl->u_resolution = glGetUniformLocation(egl->prog, "u_resolution");
+  egl->u_time = glGetUniformLocation(egl->prog, "u_time");
+  egl->u_color_shift = glGetUniformLocation(egl->prog, "color_shift");
+  glUniform1i(glGetUniformLocation(egl->prog, "u_texture"), 0);
 
   glGenBuffers(1, &egl->vbo);
   glBindBuffer(GL_ARRAY_BUFFER, egl->vbo);
@@ -143,14 +183,18 @@ void egl_ctx_upload_frame(struct egl_ctx *egl, const uint32_t *pixels,
                0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 }
 
-bool egl_ctx_present(struct egl_ctx *egl) {
+bool egl_ctx_present(struct egl_ctx *egl, float aberation, float time, int fb_width, int fb_height) {
   glClear(GL_COLOR_BUFFER_BIT);
   glUseProgram(egl->prog);
+  glUniform2f(egl->u_resolution, (float)fb_width, (float)fb_height);
+  glUniform1f(egl->u_time, time);
+  glUniform1f(egl->u_color_shift, aberation);
   glBindBuffer(GL_ARRAY_BUFFER, egl->vbo);
   glEnableVertexAttribArray(egl->a_pos);
   glVertexAttribPointer(egl->a_pos, 2, GL_FLOAT, GL_FALSE, 0, NULL);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, egl->tex);
+  glUniform2f(egl->u_resolution, fb_width, fb_height);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glDisableVertexAttribArray(egl->a_pos);
   if (!eglSwapBuffers(egl->dpy, egl->surf)) {

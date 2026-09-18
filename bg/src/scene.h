@@ -27,12 +27,22 @@ struct out_render {
 };
 
 typedef struct {
+  size_t start;
+  size_t pos;
+  char *file_buffer;
+  size_t file_buffer_size;
+} text_scroll_state_t;
+
+typedef struct {
   float             time;
   u32              *lain;
   int               lain_w, lain_h;
 
   struct out_render       *renderer_horizontal;
   struct out_render       *renderer_vertical;
+
+  text_scroll_state_t      horizontal_scroll;
+  text_scroll_state_t      vertical_scroll;
 } scene_t;
 
 scene_t *scene_create(struct out_render **renderers, int num_outs);

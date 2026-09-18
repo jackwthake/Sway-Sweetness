@@ -106,21 +106,28 @@ void draw_glyph_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char 
 }
 
 
-void draw_string_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char *str, int x_offset, int y_offset, u32 color) {
+void draw_string_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char *str, size_t str_len, int x_offset, int y_offset, int *next_char_x, int *next_char_y, u32 color) {
   int original_x_offset = x_offset; // Store the original x_offset for line breaks
 
-  while (*str) {
+  while (*str && str_len > 0) {
     if (*str == '\n') {
       y_offset += GLYPH_HEIGHT; // Move to the next line
       x_offset = original_x_offset; // Reset x position
+      *next_char_x = x_offset;
+      *next_char_y = y_offset;
     } else if (*str == '\t'){
       x_offset += GLYPH_WIDTH * 2; // Move to the next tab
+      *next_char_x = x_offset;
+      *next_char_y = y_offset;
     } else {
       draw_glyph_to_framebuffer(framebuffer, fb_w, fb_h, *str, x_offset, y_offset, color);
       x_offset += GLYPH_WIDTH; // Move to the next character position
+      *next_char_x = x_offset;
+      *next_char_y = y_offset;
     }
     
     str++;
+    str_len--;
   }
 }
 
@@ -220,7 +227,6 @@ static void get_random_file_from_subdir_recurse(const char *base_dir, unsigned m
   }
 
   if (current_depth == 0 && total_file_count > 0) {
-    srand((unsigned int)time(NULL));
     size_t random_index = rand() % total_file_count;
     snprintf(out_path, out_path_size, "%s", all_files[random_index]);
     

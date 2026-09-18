@@ -12,7 +12,7 @@ bool is_renderer_horizontal(struct out_render *renderer);
 
 
 void draw_glyph_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char c, int x_offset, int y_offset, u32 color);
-void draw_string_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char *str, int x_offset, int y_offset, u32 color);
+void draw_string_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char *str, size_t str_len, int x_offset, int y_offset, int *next_char_x, int *next_char_y, u32 color);
 
 void get_random_file_from_subdir(const char *base_dir, unsigned max_recurse_depth, char *out_path, size_t out_path_size);
 
