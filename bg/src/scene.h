@@ -22,9 +22,21 @@ typedef float    f32;
 typedef double   f64;
 
 struct out_render {
-  u32        *framebuffer;
+  u32        *framebuffer[2];
   int         fb_w, fb_h;
+  int         front; /* index of the front buffer (0 or 1) */
+  /* synchronization primitives are initialized in out_render_create */
+  void *lock; /* opaque pointer to pthread_mutex_t */
+  void *cond; /* opaque pointer to pthread_cond_t */
+  int         has_frame; /* flag set when first frame is available */
 };
+
+static inline u32 *out_render_backbuffer(struct out_render *r) {
+  return r->framebuffer[r->front ^ 1];
+}
+static inline u32 *out_render_frontbuffer(struct out_render *r) {
+  return r->framebuffer[r->front];
+}
 
 typedef struct {
   size_t start;

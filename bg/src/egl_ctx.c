@@ -24,6 +24,11 @@ static const char *frag_src =
 "uniform float color_shift;\n"
 "varying vec2 v_uv;\n"
 "\n"
+"// Pseudo-random noise generator\n"
+"float rand(vec2 co) {\n"
+"    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);\n"
+"}\n"
+"\n"
 "void main() {\n"
 "    // 1. Screen curvature (barrel distortion)\n"
 "    vec2 tc = v_uv - 0.5;\n"
@@ -35,7 +40,21 @@ static const char *frag_src =
 "    if (tc.x < 0.0 || tc.x > 1.0 || tc.y < 0.0 || tc.y > 1.0) {\n"
 "        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n"
 "    } else {\n"
-"        // 3. Chromatic Aberration\n"
+"        // --- VHS DISTORTION START ---\n"
+"        float safe_time = mod(u_time, 100.0); // Prevent float precision errors\n"
+"\n"
+"        // A. Continuous Wobble (Tape jitter)\n"
+"        float wobble = sin(tc.y * 0.5 + safe_time * 0.1) * 0.000015;\n"
+"        wobble += sin(tc.y * 10.0 - safe_time * 2.5) * 0.0001;\n"
+"        tc.x += wobble;\n"
+"\n"
+"        // B. Head Switching Artifact (Tear at the very bottom of the screen)\n"
+"        // Note: If your UVs are flipped and y=1.0 is the bottom, change 0.05 to 0.95\n"
+"        float head_switch = max(0.0, tc.y - 0.94) * 15.0;\n"
+"        tc.x += (rand(vec2(tc.y, safe_time * 10.0)) - 0.95) * 0.15 * head_switch;\n"
+"        // --- VHS DISTORTION END ---\n"
+"\n"
+"        // 3. Chromatic Aberration (Now samples the newly distorted coordinates)\n"
 "        float r = texture2D(u_texture, vec2(tc.x - color_shift, tc.y)).r;\n"
 "        float g = texture2D(u_texture, tc).g;\n"
 "        float b = texture2D(u_texture, vec2(tc.x + color_shift, tc.y)).b;\n"
@@ -46,13 +65,8 @@ static const char *frag_src =
 "        cta.rgb -= scanline;\n"
 "\n"
 "        // 5. Discrete Rolling Interference Bars\n"
-"        // Move coordinates over time and scale the frequency (how many bars)\n"
 "        float bar_coord = fract((tc.y - u_time * 0.00005) * 0.75);\n"
-"\n"
-"        // Create a discrete bar: if the coordinate is less than 0.1, darken it\n"
 "        float bar_mask = step(bar_coord, 0.1); \n"
-"        \n"
-"        // Apply the sharp bar effect (darkens the pixels inside the bar mask)\n"
 "        cta.rgb -= bar_mask * 0.05; \n"
 "\n"
 "        gl_FragColor = cta;\n"
@@ -83,8 +97,7 @@ static GLuint compile_shader(GLenum type, const char *src) {
   return s;
 }
 
-struct egl_ctx *egl_ctx_create(struct wl_display *wayland_dpy,
-  struct wl_surface *wayland_surf, int width, int height) {
+struct egl_ctx *egl_ctx_create(struct wl_display *wayland_dpy) {
   struct egl_ctx *egl = calloc(1, sizeof(*egl));
   if (!egl) return NULL;
 
@@ -131,26 +144,88 @@ struct egl_ctx *egl_ctx_create(struct wl_display *wayland_dpy,
     return NULL;
   }
 
+  return egl;
+}
+
+bool egl_ctx_init_surface(struct egl_ctx *egl, struct wl_surface *wayland_surf,
+  int width, int height) {
+  if (!egl || !egl->dpy || !egl->ctx) return false;
+
+  EGLConfig cfg = NULL;
+  EGLint n = 0;
+  static const EGLint cfg_attrs[] = {
+    EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
+    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+    EGL_RED_SIZE,        8,
+    EGL_GREEN_SIZE,      8,
+    EGL_BLUE_SIZE,       8,
+    EGL_ALPHA_SIZE,      8,
+    EGL_NONE
+  };
+  if (!eglChooseConfig(egl->dpy, cfg_attrs, &cfg, 1, &n) || n == 0) {
+    fprintf(stderr, "bg: no suitable EGL config for presenter surface\n");
+    return false;
+  }
+
   egl->egl_window = wl_egl_window_create(wayland_surf, width, height);
+  if (!egl->egl_window) {
+    fprintf(stderr, "bg: wl_egl_window_create failed\n");
+    return false;
+  }
   egl->surf = eglCreateWindowSurface(egl->dpy, cfg,
     (EGLNativeWindowType)egl->egl_window, NULL);
   if (egl->surf == EGL_NO_SURFACE) {
     fprintf(stderr, "bg: eglCreateWindowSurface failed\n");
     wl_egl_window_destroy(egl->egl_window);
-    eglDestroyContext(egl->dpy, egl->ctx);
-    eglTerminate(egl->dpy);
-    free(egl);
-    return NULL;
+    egl->egl_window = NULL;
+    return false;
   }
 
-  eglMakeCurrent(egl->dpy, egl->surf, egl->surf, egl->ctx);
+  if (!eglMakeCurrent(egl->dpy, egl->surf, egl->surf, egl->ctx)) {
+    fprintf(stderr, "bg: eglMakeCurrent failed (0x%x)\n", eglGetError());
+    eglDestroySurface(egl->dpy, egl->surf);
+    egl->surf = EGL_NO_SURFACE;
+    wl_egl_window_destroy(egl->egl_window);
+    egl->egl_window = NULL;
+    return false;
+  }
 
-  GLuint vs = compile_shader(GL_VERTEX_SHADER,   vert_src);
+  GLuint vs = compile_shader(GL_VERTEX_SHADER, vert_src);
   GLuint fs = compile_shader(GL_FRAGMENT_SHADER, frag_src);
+  if (!vs || !fs) {
+    eglMakeCurrent(egl->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    if (egl->surf != EGL_NO_SURFACE) {
+      eglDestroySurface(egl->dpy, egl->surf);
+      egl->surf = EGL_NO_SURFACE;
+    }
+    if (egl->egl_window) {
+      wl_egl_window_destroy(egl->egl_window);
+      egl->egl_window = NULL;
+    }
+    return false;
+  }
+
   egl->prog = glCreateProgram();
   glAttachShader(egl->prog, vs);
   glAttachShader(egl->prog, fs);
   glLinkProgram(egl->prog);
+  GLint linked = GL_FALSE;
+  glGetProgramiv(egl->prog, GL_LINK_STATUS, &linked);
+  if (!linked) {
+    char buf[512];
+    glGetProgramInfoLog(egl->prog, sizeof(buf), NULL, buf);
+    fprintf(stderr, "bg: shader link error: %s\n", buf);
+    glDeleteProgram(egl->prog);
+    egl->prog = 0;
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+    eglMakeCurrent(egl->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroySurface(egl->dpy, egl->surf);
+    egl->surf = EGL_NO_SURFACE;
+    wl_egl_window_destroy(egl->egl_window);
+    egl->egl_window = NULL;
+    return false;
+  }
   glDeleteShader(vs);
   glDeleteShader(fs);
 
@@ -173,7 +248,7 @@ struct egl_ctx *egl_ctx_create(struct wl_display *wayland_dpy,
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  return egl;
+  return true;
 }
 
 void egl_ctx_upload_frame(struct egl_ctx *egl, const uint32_t *pixels,

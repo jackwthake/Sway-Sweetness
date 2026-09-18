@@ -181,16 +181,16 @@ void render_text_animation(scene_t *s, float time, struct out_render *renderer, 
   const char *to_show = scroll_state->file_buffer ? scroll_state->file_buffer + scroll_state->start : NULL;
   int carret_x = 0, carret_y = 0;
 
-  if (to_show) {
+    if (to_show) {
     size_t reveal_len = 0;
     if (scroll_state->pos > scroll_state->start) reveal_len = scroll_state->pos - scroll_state->start;
     if (reveal_len > scroll_state->file_buffer_size - scroll_state->start) reveal_len = scroll_state->file_buffer_size - scroll_state->start;
-    draw_string_to_framebuffer(renderer->framebuffer, renderer->fb_w, renderer->fb_h, (char *)to_show, reveal_len, 10, 10, &carret_x, &carret_y, 0xFFFAFAFA);
+    draw_string_to_framebuffer(out_render_backbuffer(renderer), renderer->fb_w, renderer->fb_h, (char *)to_show, reveal_len, 10, 10, &carret_x, &carret_y, 0xFFFAFAFA);
   } else {
-    draw_string_to_framebuffer(renderer->framebuffer, renderer->fb_w, renderer->fb_h, "No file loaded", strlen("No file loaded"), 10, 10, &carret_x, &carret_y, 0xFFFAFAFA);
+    draw_string_to_framebuffer(out_render_backbuffer(renderer), renderer->fb_w, renderer->fb_h, "No file loaded", strlen("No file loaded"), 10, 10, &carret_x, &carret_y, 0xFFFAFAFA);
   }
 
-  if (scroll_state->file_buffer && (carret_y + 16 > max_height)) {
+  if (scroll_state->file_buffer && (carret_y + 48 > max_height)) {
     scroll_state->start = find_next_line_start(scroll_state->file_buffer, scroll_state->file_buffer_size, scroll_state->start);
     if (scroll_state->start >= scroll_state->file_buffer_size) {
       load_next_file_for_state(scroll_state);
@@ -212,7 +212,7 @@ void render_text_animation(scene_t *s, float time, struct out_render *renderer, 
         int fb_x = carret_x + x;
         int fb_y = carret_y + y;
         if (fb_x >= 0 && fb_x < renderer->fb_w && fb_y >= 0 && fb_y < renderer->fb_h) {
-          renderer->framebuffer[fb_y * renderer->fb_w + fb_x] = 0xFFF6F6F6; /* White cursor */
+          out_render_backbuffer(renderer)[fb_y * renderer->fb_w + fb_x] = 0xFFF6F6F6; /* White cursor */
         }
       }
     }
@@ -224,9 +224,11 @@ void render_horizontal(scene_t *s) {
   if (!s->renderer_horizontal) return;
   int lain_x = s->renderer_horizontal->fb_w - (s->lain_w * 0.80f);
 
-  draw_bitmap_to_framebuffer(s->renderer_horizontal->framebuffer, s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, s->navi, s->navi_w, s->navi_h, (s->renderer_horizontal->fb_w / 2) - (s->navi_w / 2), (s->renderer_horizontal->fb_h / 2) - (s->navi_h / 2));
+  int next_dummy = 0;
+  draw_string_to_framebuffer(out_render_backbuffer(s->renderer_horizontal), s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, "\t No matter where you are\nEveryone is always connected", strlen("\t No matter where you are\nEveryone is always connected"), s->renderer_horizontal->fb_w - 290, 30, &next_dummy, &next_dummy, 0xFF595959);
+  draw_bitmap_to_framebuffer(out_render_backbuffer(s->renderer_horizontal), s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, s->navi, s->navi_w, s->navi_h, (s->renderer_horizontal->fb_w / 2) - (s->navi_w / 2), (s->renderer_horizontal->fb_h / 2) - (s->navi_h / 2));
   render_text_animation(s, s->time, s->renderer_horizontal, s->renderer_horizontal->fb_h, &s->horizontal_scroll);
-  draw_bitmap_to_framebuffer(s->renderer_horizontal->framebuffer, s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, s->lain, s->lain_w, s->lain_h, lain_x, 0);
+  draw_bitmap_to_framebuffer(out_render_backbuffer(s->renderer_horizontal), s->renderer_horizontal->fb_w, s->renderer_horizontal->fb_h, s->lain, s->lain_w, s->lain_h, lain_x, 0);
 }
 
 
@@ -235,9 +237,9 @@ void render_vertical(scene_t *s) {
   int lain_y = s->renderer_vertical->fb_h - (s->lain_h * 0.60f);
   int lain_x = s->renderer_vertical->fb_w - (s->lain_w * 0.80f);
 
-  draw_bitmap_to_framebuffer(s->renderer_vertical->framebuffer, s->renderer_vertical->fb_w, s->renderer_vertical->fb_h, s->navi, s->navi_w, s->navi_h, (s->renderer_vertical->fb_w / 2) - (s->navi_w / 2), (s->renderer_vertical->fb_h / 2) - (s->navi_h / 2));
+  draw_bitmap_to_framebuffer(out_render_backbuffer(s->renderer_vertical), s->renderer_vertical->fb_w, s->renderer_vertical->fb_h, s->navi, s->navi_w, s->navi_h, (s->renderer_vertical->fb_w / 2) - (s->navi_w / 2), (s->renderer_vertical->fb_h / 2) - (s->navi_h / 2));
   render_text_animation(s, s->time, s->renderer_vertical, s->renderer_vertical->fb_h, &s->vertical_scroll);
-  draw_bitmap_to_framebuffer(s->renderer_vertical->framebuffer, s->renderer_vertical->fb_w, s->renderer_vertical->fb_h, s->lain, s->lain_w, s->lain_h, lain_x, lain_y);
+  draw_bitmap_to_framebuffer(out_render_backbuffer(s->renderer_vertical), s->renderer_vertical->fb_w, s->renderer_vertical->fb_h, s->lain, s->lain_w, s->lain_h, lain_x, lain_y);
 }
 
 
@@ -246,8 +248,9 @@ void scene_draw(scene_t *s, struct out_render **renderers, int num_outs, float t
 
   for (int i = 0; i < num_outs; i++) {
     struct out_render *r = renderers[i];
+    u32 *fb = out_render_backbuffer(r);
     for (int j = 0; j < r->fb_w * r->fb_h; j++) {
-      r->framebuffer[j] = BG;
+      fb[j] = BG;
     }
   }
 

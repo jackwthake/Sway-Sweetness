@@ -22,8 +22,9 @@ struct egl_ctx {
   int                  a_pos;
 };
 
-struct egl_ctx *egl_ctx_create(struct wl_display *dpy, struct wl_surface *surf,
-                                int width, int height);
+struct egl_ctx *egl_ctx_create(struct wl_display *dpy);
+bool egl_ctx_init_surface(struct egl_ctx *egl, struct wl_surface *surf,
+                          int width, int height);
 // Upload a software framebuffer (GL_RGBA byte order: R,G,B,A) as the blit texture.
 void egl_ctx_upload_frame(struct egl_ctx *egl, const uint32_t *pixels,
                            int fb_width, int fb_height);
