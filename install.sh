@@ -113,6 +113,7 @@ git submodule update --init --recursive
 cmake -B "$REPO_DIR/bg/build" -S "$REPO_DIR/bg" -DCMAKE_BUILD_TYPE=Release
 cmake --build "$REPO_DIR/bg/build" -j"$(nproc)"
 install -Dm755 "$REPO_DIR/bg/build/bg" "$HOME/.local/bin/bg"
+cp -r "$REPO_DIR/bg/assets" "$HOME/.local/share/bgassets/"
 info "installed bg -> $HOME/.local/bin/bg"
 
 # --- 6. Project picker (proj-pickr) ----------------------------------------

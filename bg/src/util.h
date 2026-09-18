@@ -16,4 +16,11 @@ void draw_string_to_framebuffer(u32 *framebuffer, int fb_w, int fb_h, const char
 
 void get_random_file_from_subdir(const char *base_dir, unsigned max_recurse_depth, char *out_path, size_t out_path_size);
 
+// Resolve an asset filename to a full path. Tries several locations
+// (BG_ASSET_DIR, executable-relative assets/, ~/.local/share/bg/assets,
+// /usr/local/share/bg/assets, /usr/share/bg/assets, ./assets) and returns
+// true if a readable file was found. If not found, `out_path` will contain
+// a reasonable fallback and the function returns false.
+bool resolve_asset_path(const char *asset_name, char *out_path, size_t out_path_size);
+
 #endif // __UTIL_H__

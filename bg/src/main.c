@@ -10,9 +10,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #define RENDER_SCALE  2
-#define TARGET_FPS    15
+#define TARGET_FPS    10
 #define FRAME_MS      (1000.0f / TARGET_FPS)
 
 static float get_time_ms(void) {
@@ -42,6 +43,7 @@ int main(void) {
   // Line-buffer stdout so startup/status messages hit the log file immediately
   // instead of sitting in a full buffer that a crash would lose.
   setvbuf(stdout, NULL, _IOLBF, 0);
+  printf("%s\n", getcwd(NULL, 0));
 
   struct wayland_ctx *wl = wayland_ctx_create();
   if (!wl) return 1;

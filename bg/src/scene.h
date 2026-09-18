@@ -31,12 +31,17 @@ typedef struct {
   size_t pos;
   char *file_buffer;
   size_t file_buffer_size;
+  float posf; /* fractional position for smooth, time-based advancement */
+  float last_time; /* last update time used to compute delta */
 } text_scroll_state_t;
 
 typedef struct {
   float             time;
   u32              *lain;
   int               lain_w, lain_h;
+
+  u32              *navi;
+  int               navi_w, navi_h;
 
   struct out_render       *renderer_horizontal;
   struct out_render       *renderer_vertical;

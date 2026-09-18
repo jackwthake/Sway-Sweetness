@@ -9,6 +9,8 @@
 #include <time.h>
 #include <limits.h>
 #include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include "glyphs.inc"
 
@@ -252,4 +254,78 @@ static void get_random_file_from_subdir_recurse(const char *base_dir, unsigned m
 
 void get_random_file_from_subdir(const char *base_dir, unsigned max_recurse_depth, char *out_path, size_t out_path_size) {
   get_random_file_from_subdir_recurse(base_dir, max_recurse_depth, 0, out_path, out_path_size);
+}
+
+
+bool resolve_asset_path(const char *asset_name, char *out_path, size_t out_path_size) {
+  if (!asset_name || !out_path || out_path_size == 0) return false;
+
+  char try_path[PATH_MAX];
+
+  // 1) Environment override
+  const char *env = getenv("BG_ASSET_DIR");
+  if (env) {
+    snprintf(try_path, sizeof(try_path), "%s/%s", env, asset_name);
+    if (access(try_path, R_OK) == 0) {
+      strncpy(out_path, try_path, out_path_size);
+      out_path[out_path_size-1] = '\0';
+      return true;
+    }
+  }
+
+  // 2) Executable relative: /path/to/exe -> /path/to/exe/assets/<asset>
+  char exe[PATH_MAX];
+  ssize_t len = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+  if (len > 0) {
+    exe[len] = '\0';
+    char *last = strrchr(exe, '/');
+    if (last) {
+      *last = '\0'; // trim to directory
+      snprintf(try_path, sizeof(try_path), "%s/assets/%s", exe, asset_name);
+      if (access(try_path, R_OK) == 0) {
+        strncpy(out_path, try_path, out_path_size);
+        out_path[out_path_size-1] = '\0';
+        return true;
+      }
+      // Try ../share/bg/assets relative to exe dir (common install location)
+      snprintf(try_path, sizeof(try_path), "%s/../share/bg/assets/%s", exe, asset_name);
+      if (access(try_path, R_OK) == 0) {
+        strncpy(out_path, try_path, out_path_size);
+        out_path[out_path_size-1] = '\0';
+        return true;
+      }
+    }
+  }
+
+  // 3) Per-user local share
+  const char *home = getenv("HOME");
+  if (home) {
+    snprintf(try_path, sizeof(try_path), "%s/.local/share/bg/assets/%s", home, asset_name);
+    if (access(try_path, R_OK) == 0) {
+      strncpy(out_path, try_path, out_path_size);
+      out_path[out_path_size-1] = '\0';
+      return true;
+    }
+  }
+
+  // 4) System locations
+  snprintf(try_path, sizeof(try_path), "/usr/local/share/bg/assets/%s", asset_name);
+  if (access(try_path, R_OK) == 0) {
+    strncpy(out_path, try_path, out_path_size);
+    out_path[out_path_size-1] = '\0';
+    return true;
+  }
+
+  snprintf(try_path, sizeof(try_path), "/usr/share/bg/assets/%s", asset_name);
+  if (access(try_path, R_OK) == 0) {
+    strncpy(out_path, try_path, out_path_size);
+    out_path[out_path_size-1] = '\0';
+    return true;
+  }
+
+  // 5) Fallback to relative ./assets/<asset> (may still work when run from build dir)
+  snprintf(try_path, sizeof(try_path), "./assets/%s", asset_name);
+  strncpy(out_path, try_path, out_path_size);
+  out_path[out_path_size-1] = '\0';
+  return false;
 }
